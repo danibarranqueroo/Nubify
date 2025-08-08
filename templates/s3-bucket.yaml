@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Plantilla básica para crear un bucket S3 con configuración segura'
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Nombre del bucket S3 (debe ser único globalmente)
+    AllowedPattern: '^[a-z0-9][a-z0-9.-]*[a-z0-9]$'
+    ConstraintDescription: El nombre del bucket debe ser válido y único globalmente
+  
+  Versioning:
+    Type: String
+    Default: Enabled
+    Description: Habilitar versionado del bucket
+    AllowedValues:
+      - Enabled
+      - Suspended
+    ConstraintDescription: Debe ser Enabled o Suspended
+
+Resources:
+  # Bucket S3
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: !Ref Versioning
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-bucket'
+        - Key: Environment
+          Value: Development
+        - Key: Project
+          Value: Nubify
+
+Outputs:
+  BucketName:
+    Description: Nombre del bucket S3
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+  
+  BucketArn:
+    Description: ARN del bucket S3
+    Value: !GetAtt S3Bucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketArn'
+  
+  BucketDomainName:
+    Description: Nombre de dominio del bucket
+    Value: !GetAtt S3Bucket.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketDomainName' 

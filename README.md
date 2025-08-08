@@ -1,0 +1,286 @@
+# Nubify
+
+Nubify es una plataforma desarrollada en Python que simplifica la gestión de servicios cloud mediante una interfaz accesible, asistida por un chatbot técnico inteligente.
+
+## Descripción
+
+Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran muy complicada su UI y tienen miedo de crear algo mal configurado que incurra en altos costes.
+
+## Fases de Desarrollo
+
+### Fase 1: Funcionamiento por CLI ✅ COMPLETADA
+- ✅ Inicio de sesión con variables de entorno
+- ✅ Mostrar recursos disponibles en AWS
+- ✅ Comandos con --help para recursos a desplegar
+- ✅ **Estimación de costes realista con AWS Pricing API**
+- ✅ Despliegue y eliminación de stacks
+- ✅ Gestión de plantillas CloudFormation
+
+### Fase 2: Interfaz Web (Pendiente)
+- Aplicación web en localhost
+- Funcionamiento tanto CLI como web
+- Despliegue con Docker
+
+### Fase 3: Chatbot Inteligente (Pendiente)
+- Chatbot que recomiende servicios
+- Estimación de costes avanzada
+- Creación de plantillas personalizadas
+
+## Características Principales
+
+### 🎯 **Estimación de Costes Inteligente**
+- **AWS Pricing API integrada** - Precios reales y actualizados
+- **Estimaciones por servicio** - EC2, S3, Lambda con precios específicos
+- **Parámetros personalizables** - InstanceType, MemorySize, etc.
+- **Fallback robusto** - Estimaciones estáticas si API no está disponible
+- **Unidades correctas** - /mes para servicios, /GB-mes para S3
+
+### 🚀 **Gestión de Stacks**
+- **Despliegue simplificado** - Un comando para crear recursos
+- **Eliminación segura** - Confirmación antes de eliminar
+- **Monitoreo en tiempo real** - Estado de despliegue con progress bars
+- **Manejo de errores** - Timeouts y fallbacks automáticos
+
+### 📋 **Plantillas Predefinidas**
+- **Configuración segura** - Sin misconfiguraciones
+- **Parámetros validados** - Verificación antes del despliegue
+- **Documentación integrada** - Descripción y detalles de cada plantilla
+
+## Instalación
+
+### Prerrequisitos
+
+- Python 3.8.1 o superior
+- Poetry (recomendado) o pip
+- Credenciales de AWS configuradas
+
+### Instalación con Poetry (Recomendado)
+
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd nubify
+
+# Instalar Poetry si no está instalado
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Instalar dependencias y configurar el entorno
+poetry install
+
+# Activar el entorno virtual
+poetry env activate
+source $(poetry env info --path)/bin/activate
+
+# Crear archivo de configuración
+cp env.example .env
+# Editar .env con tus credenciales de AWS
+```
+
+### Instalación con pip
+
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd nubify
+
+# Crear entorno virtual
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Instalar en modo desarrollo
+pip install -e .
+```
+
+## Configuración
+
+1. Crear archivo `.env` con tus credenciales AWS:
+```bash
+AWS_ACCESS_KEY_ID=tu_access_key
+AWS_SECRET_ACCESS_KEY=tu_secret_key
+AWS_DEFAULT_REGION=us-east-1
+```
+
+2. Asegúrate de tener permisos adecuados en AWS para los servicios que vas a usar.
+
+## Uso
+
+### Comandos básicos
+
+```bash
+# Ver ayuda general
+nubify --help
+
+# Probar conexión con AWS
+nubify test
+
+# Listar recursos disponibles en AWS
+nubify list-resources
+
+# Ver plantillas disponibles
+nubify list-templates
+
+# Ver detalles de una plantilla
+nubify template-details s3-bucket
+
+# Estimación de costes con precios reales
+nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.micro
+
+# Desplegar un recurso
+nubify deploy s3-bucket my-stack -p BucketName=mi-bucket-unico
+
+# Listar stacks desplegados
+nubify list-stacks
+
+# Ver recursos de un stack
+nubify stack-resources my-stack
+
+# Eliminar un stack
+nubify delete-stack my-stack
+```
+
+### Ejemplos de uso con estimación de costes
+
+```bash
+# Estimación de costes para EC2
+nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.small
+
+# Estimación de costes para S3
+nubify estimate-costs s3-bucket -p Versioning=Suspended
+
+# Estimación de costes para Lambda
+nubify estimate-costs lambda-function -p MemorySize=512
+
+# Desplegar con confirmación de costes
+nubify deploy s3-bucket my-s3-stack -p BucketName=mi-bucket-unico
+```
+
+## Desarrollo
+
+### Configuración del entorno de desarrollo
+
+```bash
+# Instalar dependencias de desarrollo
+poetry install --with dev
+
+# Activar el entorno virtual
+poetry env activate
+source $(poetry env info --path)/bin/activate
+
+# Ejecutar tests
+poetry run pytest
+
+# Ejecutar tests con cobertura
+poetry run pytest --cov=src
+
+# Formatear código
+poetry run black src/
+poetry run isort src/
+
+# Verificar tipos
+poetry run mypy src/
+
+# Linting
+poetry run flake8 src/
+```
+
+### Estructura del Proyecto
+
+```
+nubify/
+├── src/                    # Código fuente
+│   ├── __init__.py
+│   ├── main.py            # CLI principal
+│   ├── config.py          # Configuración AWS
+│   ├── aws_client.py      # Cliente AWS
+│   ├── templates.py       # Gestión de plantillas y Pricing API
+│   └── deployer.py        # Despliegue con waiters mejorados
+├── templates/              # Plantillas de CloudFormation
+│   ├── ec2-basic-no-key.yaml
+│   ├── s3-bucket.yaml
+│   └── lambda-function.yaml
+├── tests/                  # Tests unitarios
+├── pyproject.toml         # Configuración Poetry
+├── env.example            # Variables de entorno de ejemplo
+└── README.md              # Este archivo
+```
+
+## Tecnologías Utilizadas
+
+- **Python 3.8.1+**: Lenguaje principal
+- **Poetry**: Gestión de dependencias y empaquetado
+- **boto3**: SDK de AWS para Python
+- **AWS Pricing API**: Estimación de costes reales
+- **Click**: Framework para CLI
+- **Rich**: Librería para interfaces de terminal bonitas
+- **CloudFormation**: Para plantillas de infraestructura
+- **pytest**: Framework de testing
+- **Black**: Formateador de código
+- **mypy**: Verificación de tipos
+
+## Plantillas Disponibles
+
+### EC2 Básica (`ec2-basic-no-key.yaml`)
+- Instancia EC2 con configuración segura
+- Security Group con puertos 22, 80, 443 abiertos
+- **Sin requerimiento de KeyPair** - Más fácil de usar
+- Parámetros: InstanceType
+
+### S3 Bucket (`s3-bucket.yaml`)
+- Bucket S3 con configuración segura
+- Encriptación AES256 habilitada
+- Bloqueo de acceso público
+- **Sin BucketPolicy problemática** - Despliegue confiable
+- Parámetros: BucketName, Versioning
+
+### Lambda Function (`lambda-function.yaml`)
+- Función Lambda con configuración básica
+- IAM Role con permisos mínimos
+- CloudWatch Logs configurado
+- Parámetros: FunctionName, Runtime, MemorySize, Timeout
+
+## Estimación de Costes
+
+### 🎯 **Características de la Estimación**
+
+- **Precios reales de AWS** - Obtenidos via Pricing API
+- **Estimaciones por parámetro** - Basadas en InstanceType, MemorySize, etc.
+- **Unidades correctas** - /mes para servicios, /GB-mes para S3
+- **Fallback automático** - Estimaciones estáticas si API no está disponible
+- **Debug transparente** - Muestra qué productos se obtienen de la API
+
+### 📊 **Ejemplo de Salida**
+
+```bash
+$ nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.micro
+
+🔍 Consultando AWS Pricing API para AmazonEC2...
+✅ Respuesta recibida de Pricing API (1 productos)
+💰 Precio EC2 (t3.micro): $0.010900/hora
+
+Coste Total Estimado: $7.85/mes
+```
+
+## Contribución
+
+Este es un proyecto de Trabajo Fin de Grado. Para contribuir, por favor contacta con el autor.
+
+## Licencia
+
+Este proyecto está bajo la licencia MIT.
+
+## Roadmap
+
+### Fase 2 (Próximamente)
+- [ ] Interfaz web con FastAPI
+- [ ] Dockerización
+- [ ] API REST para gestión de recursos
+- [ ] Dashboard web
+
+### Fase 3 (Futuro)
+- [ ] Integración con LangChain
+- [ ] Chatbot inteligente
+- [ ] Estimación de costes avanzada
+- [ ] Generación automática de plantillas 

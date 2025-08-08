@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Plantilla básica para crear una función Lambda con configuración segura'
+
+Parameters:
+  FunctionName:
+    Type: String
+    Description: Nombre de la función Lambda
+    AllowedPattern: '^[a-zA-Z0-9-_]+$'
+    ConstraintDescription: El nombre debe contener solo letras, números, guiones y guiones bajos
+  
+  Runtime:
+    Type: String
+    Default: python3.9
+    Description: Runtime de la función Lambda
+    AllowedValues:
+      - python3.8
+      - python3.9
+      - python3.10
+      - python3.11
+      - nodejs16.x
+      - nodejs18.x
+    ConstraintDescription: Debe ser un runtime válido
+  
+  MemorySize:
+    Type: Number
+    Default: 128
+    Description: Memoria asignada a la función (MB)
+    MinValue: 128
+    MaxValue: 10240
+    ConstraintDescription: La memoria debe estar entre 128 y 10240 MB
+  
+  Timeout:
+    Type: Number
+    Default: 3
+    Description: Timeout de la función (segundos)
+    MinValue: 1
+    MaxValue: 900
+    ConstraintDescription: El timeout debe estar entre 1 y 900 segundos
+
+Resources:
+  # IAM Role para la función Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-lambda-role'
+        - Key: Environment
+          Value: Development
+        - Key: Project
+          Value: Nubify
+
+  # Función Lambda
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      Runtime: !Ref Runtime
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'message': 'Hello from Nubify Lambda!',
+                      'event': event
+                  })
+              }
+      MemorySize: !Ref MemorySize
+      Timeout: !Ref Timeout
+      Environment:
+        Variables:
+          ENVIRONMENT: Development
+          PROJECT: Nubify
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-function'
+        - Key: Environment
+          Value: Development
+        - Key: Project
+          Value: Nubify
+
+  # CloudWatch Log Group
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LambdaFunction}'
+      RetentionInDays: 7
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-log-group'
+        - Key: Environment
+          Value: Development
+        - Key: Project
+          Value: Nubify
+
+Outputs:
+  FunctionName:
+    Description: Nombre de la función Lambda
+    Value: !Ref LambdaFunction
+    Export:
+      Name: !Sub '${AWS::StackName}-FunctionName'
+  
+  FunctionArn:
+    Description: ARN de la función Lambda
+    Value: !GetAtt LambdaFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-FunctionArn'
+  
+  FunctionUrl:
+    Description: URL de la función Lambda
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${LambdaFunction}'
+    Export:
+      Name: !Sub '${AWS::StackName}-FunctionUrl'
+  
+  ExecutionRoleArn:
+    Description: ARN del rol de ejecución
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ExecutionRoleArn' 
