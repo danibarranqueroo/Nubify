@@ -53,8 +53,8 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 ### 🚀 **Instalación Rápida (Recomendada)**
 
 ```bash
-# Instalar nubify globalmente
-pipx install nubify
+# Instalar nubify globalmente desde GitHub
+pipx install git+https://github.com/danibarranqueroo/nubify.git
 
 # Configurar variables de entorno
 export AWS_ACCESS_KEY_ID=tu_access_key
@@ -64,11 +64,6 @@ export GEMINI_API_KEY=tu_gemini_api_key
 
 # ¡Listo! Ya puedes usar nubify
 nubify --help
-```
-
-**Nota:** Si nubify aún no está publicado en PyPI, puedes instalarlo desde el repositorio:
-```bash
-pipx install git+https://github.com/danibarranqueroo/nubify.git
 ```
 
 ### 🔧 **Instalación para Desarrollo**
@@ -331,7 +326,7 @@ Este proyecto está bajo la licencia MIT.
 
 ### Actualizar nubify
 ```bash
-pipx upgrade nubify
+pipx upgrade git+https://github.com/danibarranqueroo/nubify.git
 ```
 
 ### Desinstalar nubify
