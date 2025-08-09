@@ -3,11 +3,9 @@ Módulo para manejar el despliegue de recursos usando CloudFormation
 """
 
 import boto3
-import yaml
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from botocore.exceptions import ClientError
 from rich.console import Console
-from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from .config import config

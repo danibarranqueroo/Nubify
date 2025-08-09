@@ -4,7 +4,6 @@ Maneja variables de entorno y configuración de AWS
 """
 
 import os
-from typing import Optional
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde .env

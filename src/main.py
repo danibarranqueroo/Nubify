@@ -7,7 +7,6 @@ import click
 import sys
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
 from .config import config
 from .aws_client import AWSClient

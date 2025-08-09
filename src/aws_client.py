@@ -3,11 +3,10 @@ Módulo para manejar la conexión y operaciones con AWS
 """
 
 import boto3
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from botocore.exceptions import ClientError, NoCredentialsError
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
 
 from .config import config
 
