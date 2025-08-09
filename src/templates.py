@@ -541,13 +541,31 @@ class TemplateManager:
         return round(total_cost, 2)
     
     def _estimate_rds_cost(self, instance_class: str) -> float:
-        """Estima el coste de RDS"""
-        # RDS pricing (us-east-1, MySQL)
+        """Estima el coste de RDS usando Pricing API o estimaciones estáticas"""
+        
+        # Intentar obtener precio real de AWS Pricing API
+        if self.pricing_client:
+            filters = [
+                {'Type': 'TERM_MATCH', 'Field': 'instanceType', 'Value': instance_class},
+                {'Type': 'TERM_MATCH', 'Field': 'databaseEngine', 'Value': 'MySQL'},
+                {'Type': 'TERM_MATCH', 'Field': 'databaseEdition', 'Value': 'Standard'},
+                {'Type': 'TERM_MATCH', 'Field': 'deploymentOption', 'Value': 'Single-AZ'},
+            ]
+            
+            real_price = self._get_aws_pricing('AmazonRDS', filters)
+            if real_price is not None:
+                monthly_cost = real_price * 24 * 30  # 24 horas * 30 días
+                console.print(f"[blue]💰 Precio RDS ({instance_class}): ${real_price:.6f}/hora[/blue]")
+                return round(monthly_cost, 2)
+        
+        # Fallback a estimaciones estáticas
         pricing = {
             'db.t3.micro': 0.017,     # $0.017/hora
             'db.t3.small': 0.034,     # $0.034/hora
             'db.t3.medium': 0.068,    # $0.068/hora
             'db.t3.large': 0.136,     # $0.136/hora
+            'db.t2.micro': 0.017,     # $0.017/hora
+            'db.t2.small': 0.034,     # $0.034/hora
             'db.r5.large': 0.291,     # $0.291/hora
         }
         

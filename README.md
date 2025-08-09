@@ -50,13 +50,35 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 
 ## Instalación
 
-### Prerrequisitos
+### 🚀 **Instalación Rápida (Recomendada)**
 
-- Python 3.8.1 o superior
+```bash
+# Instalar nubify globalmente
+pipx install nubify
+
+# Configurar variables de entorno
+export AWS_ACCESS_KEY_ID=tu_access_key
+export AWS_SECRET_ACCESS_KEY=tu_secret_key
+export AWS_DEFAULT_REGION=us-east-1
+export GEMINI_API_KEY=tu_gemini_api_key
+
+# ¡Listo! Ya puedes usar nubify
+nubify --help
+```
+
+**Nota:** Si nubify aún no está publicado en PyPI, puedes instalarlo desde el repositorio:
+```bash
+pipx install git+https://github.com/danibarranqueroo/nubify.git
+```
+
+### 🔧 **Instalación para Desarrollo**
+
+#### Prerrequisitos
+- Python 3.9 o superior
 - Poetry
 - Credenciales de AWS configuradas
 
-### Instalación con Poetry
+#### Instalación con Poetry
 
 ```bash
 # Clonar el repositorio
@@ -139,6 +161,9 @@ nubify estimate-costs s3-bucket -p Versioning=Suspended
 
 # Estimación de costes para Lambda
 nubify estimate-costs lambda-function -p MemorySize=512
+
+# Estimación de costes para RDS
+nubify estimate-costs rds-basic -p DBInstanceClass=db.t3.small
 
 # Desplegar con confirmación de costes
 nubify deploy s3-bucket my-s3-stack -p BucketName=mi-bucket-unico
@@ -266,6 +291,12 @@ nubify/
 - CloudWatch Logs configurado
 - Parámetros: FunctionName, Runtime, MemorySize, Timeout
 
+### RDS MySQL (`rds-basic.yaml`)
+- Instancia RDS MySQL con configuración segura
+- Security Group con puerto 3306 abierto
+- Encriptación habilitada y backups automáticos
+- Parámetros: DBInstanceClass, DBName, DBUsername, DBPassword, AllocatedStorage
+
 ## Estimación de Costes
 
 ### 🎯 **Características de la Estimación**
@@ -295,6 +326,23 @@ Este es un proyecto de Trabajo Fin de Grado. Para contribuir, por favor contacta
 ## Licencia
 
 Este proyecto está bajo la licencia MIT.
+
+## 🔄 **Gestión de Versiones**
+
+### Actualizar nubify
+```bash
+pipx upgrade nubify
+```
+
+### Desinstalar nubify
+```bash
+pipx uninstall nubify
+```
+
+### Ver versión instalada
+```bash
+nubify --version
+```
 
 ## Roadmap
 

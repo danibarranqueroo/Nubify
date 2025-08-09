@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Plantilla básica para una instancia RDS MySQL con configuración segura'
+
+Parameters:
+  DBInstanceIdentifier:
+    Type: String
+    Description: Identificador único para la instancia RDS
+    AllowedPattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$'
+    ConstraintDescription: Debe ser alfanumérico y contener solo guiones
+    Default: my-rds-instance
+  
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: Tipo de instancia RDS
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t2.micro
+      - db.t2.small
+    ConstraintDescription: Debe ser un tipo de instancia RDS válido
+  
+  DBName:
+    Type: String
+    Default: mydatabase
+    Description: Nombre de la base de datos inicial
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+    ConstraintDescription: Debe comenzar con una letra y contener solo letras, números y guiones bajos
+  
+  DBUsername:
+    Type: String
+    Default: admin
+    Description: Nombre de usuario maestro
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+    ConstraintDescription: Debe comenzar con una letra y contener solo letras, números y guiones bajos
+  
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Contraseña del usuario maestro (mínimo 8 caracteres)
+    MinLength: 8
+    AllowedPattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$'
+    ConstraintDescription: Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales
+  
+  AllocatedStorage:
+    Type: Number
+    Default: 20
+    Description: Almacenamiento asignado en GB
+    MinValue: 20
+    MaxValue: 65536
+    ConstraintDescription: Debe estar entre 20 y 65536 GB
+  
+  EngineVersion:
+    Type: String
+    Default: '8.0.33'
+    Description: Versión del motor MySQL
+    AllowedValues:
+      - '8.0.33'
+      - '8.0.32'
+      - '5.7.44'
+    ConstraintDescription: Debe ser una versión válida de MySQL
+
+Resources:
+  # Security Group para RDS
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+          Description: MySQL access from anywhere (consider restricting this in production)
+  
+  # Subnet Group para RDS
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS instance
+      SubnetIds:
+        - !Ref 'AWS::NoValue'  # Se usará la subnet por defecto
+  
+  # Instancia RDS
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: mysql
+      EngineVersion: !Ref EngineVersion
+      DBName: !Ref DBName
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      AllocatedStorage: !Ref AllocatedStorage
+      
+      # Configuración de seguridad
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      
+      # Configuración de backup y mantenimiento
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: '03:00-04:00'
+      PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
+      
+      # Configuración de rendimiento
+      StorageType: gp2
+      StorageEncrypted: true
+      
+      # Configuración de disponibilidad
+      MultiAZ: false
+      DeletionProtection: false
+      
+      # Configuración de monitoreo
+      MonitoringInterval: 60
+      EnablePerformanceInsights: false
+      
+      # Tags
+      Tags:
+        - Key: Name
+          Value: !Ref DBInstanceIdentifier
+        - Key: Environment
+          Value: Development
+        - Key: ManagedBy
+          Value: Nubify
+
+Outputs:
+  DBEndpoint:
+    Description: Endpoint de la instancia RDS
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${AWS::StackName}-DBEndpoint'
+  
+  DBPort:
+    Description: Puerto de la instancia RDS
+    Value: !GetAtt DBInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${AWS::StackName}-DBPort'
+  
+  DBName:
+    Description: Nombre de la base de datos
+    Value: !Ref DBName
+    Export:
+      Name: !Sub '${AWS::StackName}-DBName'
+  
+  SecurityGroupId:
+    Description: ID del Security Group de RDS
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-SecurityGroupId'
