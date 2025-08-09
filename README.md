@@ -21,11 +21,12 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 - Funcionamiento tanto CLI como web
 - Despliegue con Docker
 
-### Fase 3: Chatbot Inteligente (Pendiente)
-- Chatbot que recomiende servicios
-- Explicación de la estimación de costes
-- Explicación y recomendación de servicios
-- Creación de plantillas personalizadas
+### Fase 3: Chatbot Inteligente ✅ COMPLETADA
+- ✅ Chatbot que recomiende servicios
+- ✅ Explicación de la estimación de costes
+- ✅ Explicación y recomendación de servicios
+- ✅ Creación de plantillas personalizadas
+- ✅ Asistencia interactiva con IA (Gemini)
 
 ## Características Principales
 
@@ -122,6 +123,9 @@ nubify stack-resources my-stack
 
 # Eliminar un stack
 nubify delete-stack my-stack
+
+# Iniciar chatbot interactivo
+nubify chat
 ```
 
 ### Ejemplos de uso con estimación de costes
@@ -138,6 +142,42 @@ nubify estimate-costs lambda-function -p MemorySize=512
 
 # Desplegar con confirmación de costes
 nubify deploy s3-bucket my-s3-stack -p BucketName=mi-bucket-unico
+
+# Chatbot para asistencia inteligente
+nubify chat
+```
+
+### 🤖 **Chatbot Inteligente**
+
+Nubify incluye un chatbot interactivo que utiliza IA (Gemini) para ayudarte con:
+
+- **Explicación de servicios AWS** - Qué es cada servicio y para qué sirve
+- **Creación de plantillas** - Genera plantillas CloudFormation personalizadas
+- **Ayuda con comandos** - Explica cómo usar nubify correctamente
+- **Resolución de problemas** - Ayuda con errores comunes
+- **Recomendaciones** - Sugiere servicios según tus necesidades
+
+#### Configuración del Chatbot
+
+1. Obtén una API key de Gemini en [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Añade la variable de entorno:
+```bash
+GEMINI_API_KEY=tu_gemini_api_key
+```
+
+#### Uso del Chatbot
+
+```bash
+# Iniciar chat interactivo
+nubify chat
+
+# Ejemplos de preguntas que puedes hacer:
+# - "¿Qué es EC2 y para qué sirve?"
+# - "Crea una plantilla para un bucket S3 con versionado"
+# - "¿Cómo uso el comando deploy?"
+# - "Tengo un error al desplegar, ¿qué hago?"
+# - "¿Qué servicios AWS me recomiendas para una aplicación web?"
+```
 ```
 
 ## Desarrollo
@@ -179,7 +219,8 @@ nubify/
 │   ├── config.py          # Configuración AWS
 │   ├── aws_client.py      # Cliente AWS
 │   ├── templates.py       # Gestión de plantillas y Pricing API
-│   └── deployer.py        # Despliegue con waiters mejorados
+│   ├── deployer.py        # Despliegue con waiters mejorados
+│   └── chat.py            # Chatbot inteligente con IA
 ├── templates/              # Plantillas de CloudFormation
 │   ├── ec2-basic-no-key.yaml
 │   ├── s3-bucket.yaml
@@ -199,6 +240,7 @@ nubify/
 - **Click**: Framework para CLI
 - **Rich**: Librería para interfaces de terminal bonitas
 - **CloudFormation**: Para plantillas de infraestructura
+- **Google Generative AI**: Chatbot inteligente con Gemini
 - **pytest**: Framework de testing
 - **Black**: Formateador de código
 - **mypy**: Verificación de tipos
@@ -256,14 +298,12 @@ Este proyecto está bajo la licencia MIT.
 
 ## Roadmap
 
-### Fase 2 (Próximamente)
-- [ ] Interfaz web con FastAPI
-- [ ] Dockerización
-- [ ] API REST para gestión de recursos
-- [ ] Dashboard web
+En caso de continuar con el desarrollo de este proyecto a futuro, se planea lo siguiente:
 
-### Fase 3 (Futuro)
-- [ ] Integración con LangChain
-- [ ] Chatbot inteligente
-- [ ] Estimación de costes avanzada
-- [ ] Generación automática de plantillas 
+- Mejora de la inteligencia artifical del chatbot
+- Posibilidad de uso desde telegram
+- Añadir  más servicios de AWS
+- Añadir más plantillas de CloudFormation
+- Añadir integración con trivy para escaneo de vulnerabilidades en las plantillas
+- Añadir integración con prowler para escaneo de vulnerabilidades en la infraestructura desplegada
+- Estudiar la viabilidad de hacer la herramienta multicloud

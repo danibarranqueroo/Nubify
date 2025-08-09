@@ -12,6 +12,7 @@ from .config import config
 from .aws_client import AWSClient
 from .templates import TemplateManager
 from .deployer import Deployer
+from .chat import NubifyChatbot
 
 console = Console()
 
@@ -246,6 +247,22 @@ def delete_stack(stack_name, yes):
         sys.exit(1)
 
 @cli.command()
+def chat():
+    """Inicia el chatbot interactivo de nubify"""
+    console.print(Panel.fit(
+        "[bold blue]Nubify[/bold blue]\n"
+        "Iniciando chatbot interactivo...",
+        title="Chat"
+    ))
+    
+    try:
+        chatbot = NubifyChatbot()
+        chatbot.start_chat()
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+@cli.command()
 def help():
     """Muestra ayuda detallada sobre los comandos disponibles"""
     
@@ -257,6 +274,7 @@ def help():
   list-resources          Lista todos los recursos AWS disponibles
   list-templates          Lista las plantillas disponibles
   list-stacks             Lista los stacks de CloudFormation
+  chat                    Inicia el chatbot interactivo
 
 [bold]Plantillas:[/bold]
   template-details TEMPLATE    Muestra detalles de una plantilla
@@ -271,6 +289,7 @@ def help():
   nubify test
   nubify list-resources
   nubify list-templates
+  nubify chat
   nubify template-details ec2-basic
   nubify estimate-costs ec2-basic
   nubify deploy ec2-basic my-stack
@@ -284,6 +303,7 @@ def help():
   AWS_ACCESS_KEY_ID=tu_access_key
   AWS_SECRET_ACCESS_KEY=tu_secret_key
   AWS_DEFAULT_REGION=us-east-1
+  GEMINI_API_KEY=tu_gemini_api_key
     """
     
     console.print(Panel(help_text, title="Ayuda de Nubify"))
