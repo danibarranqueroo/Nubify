@@ -7,7 +7,7 @@
 ### Prerrequisitos
 
 - Python 3.8 o superior
-- Poetry (recomendado) o pip
+- Poetry
 - Git
 
 ### Instalación

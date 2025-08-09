@@ -5,8 +5,8 @@ description = "Plataforma para simplificar la gestión de servicios cloud"
 authors = ["José Daniel Barranquero Ortigosa <danielbo2001@correo.ugr.es>"]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/danielbo2001/nubify"
-repository = "https://github.com/danielbo2001/nubify"
+homepage = "https://github.com/danibarranqueroo/nubify"
+repository = "https://github.com/danibarranqueroo/nubify"
 keywords = ["aws", "cloud", "infrastructure", "deployment", "cli"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -46,7 +46,7 @@ mypy = "^1.0.0"
 nubify = "src.main:cli"
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/danielbo2001/nubify/issues"
+"Bug Tracker" = "https://github.com/danibarranqueroo/nubify/issues"
 
 [build-system]
 requires = ["poetry-core"]

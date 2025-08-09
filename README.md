@@ -1,6 +1,6 @@
 # Nubify
 
-Nubify es una plataforma desarrollada en Python que simplifica la gestión de servicios cloud mediante una interfaz accesible, asistida por un chatbot técnico inteligente.
+Nubify es una plataforma desarrollada en Python que simplifica la gestión de servicios cloud, ahora mismo cuenta únicamente con uso por CLI pero en un futuro se planea la creación de una interfaz web accesible y la incorporación de un chatbot técnico inteligente.
 
 ## Descripción
 
@@ -23,7 +23,8 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 
 ### Fase 3: Chatbot Inteligente (Pendiente)
 - Chatbot que recomiende servicios
-- Estimación de costes avanzada
+- Explicación de la estimación de costes
+- Explicación y recomendación de servicios
 - Creación de plantillas personalizadas
 
 ## Características Principales
@@ -51,10 +52,10 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 ### Prerrequisitos
 
 - Python 3.8.1 o superior
-- Poetry (recomendado) o pip
+- Poetry
 - Credenciales de AWS configuradas
 
-### Instalación con Poetry (Recomendado)
+### Instalación con Poetry
 
 ```bash
 # Clonar el repositorio
@@ -74,24 +75,6 @@ source $(poetry env info --path)/bin/activate
 # Crear archivo de configuración
 cp env.example .env
 # Editar .env con tus credenciales de AWS
-```
-
-### Instalación con pip
-
-```bash
-# Clonar el repositorio
-git clone <repository-url>
-cd nubify
-
-# Crear entorno virtual
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Instalar en modo desarrollo
-pip install -e .
 ```
 
 ## Configuración
