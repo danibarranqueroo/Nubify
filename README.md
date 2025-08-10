@@ -36,6 +36,7 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 - **Parámetros personalizables** - InstanceType, MemorySize, etc.
 - **Fallback robusto** - Estimaciones estáticas si API no está disponible
 - **Unidades correctas** - /mes para servicios, /GB-mes para S3
+- **Modo verbose** - Información detallada de la estimación con `-v`
 
 ### 🚀 **Gestión de Stacks**
 - **Despliegue simplificado** - Un comando para crear recursos
@@ -102,6 +103,7 @@ cp env.example .env
 AWS_ACCESS_KEY_ID=tu_access_key
 AWS_SECRET_ACCESS_KEY=tu_secret_key
 AWS_DEFAULT_REGION=us-east-1
+GEMINI_API_KEY=tu_gemini_api_key
 ```
 
 2. Asegúrate de tener permisos adecuados en AWS para los servicios que vas a usar.
@@ -113,6 +115,9 @@ AWS_DEFAULT_REGION=us-east-1
 ```bash
 # Ver ayuda general
 nubify --help
+
+# Ver ayuda detallada de todos los comandos
+nubify help
 
 # Probar conexión con AWS
 nubify test
@@ -129,8 +134,14 @@ nubify template-details s3-bucket
 # Estimación de costes con precios reales
 nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.micro
 
+# Estimación de costes con información detallada
+nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.micro -v
+
 # Desplegar un recurso
 nubify deploy s3-bucket my-stack -p BucketName=mi-bucket-unico
+
+# Desplegar con estimación detallada de costes
+nubify deploy s3-bucket my-stack -p BucketName=mi-bucket-unico -v
 
 # Listar stacks desplegados
 nubify list-stacks
@@ -148,8 +159,11 @@ nubify chat
 ### Ejemplos de uso con estimación de costes
 
 ```bash
-# Estimación de costes para EC2
+# Estimación de costes para EC2 (modo normal)
 nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.small
+
+# Estimación de costes para EC2 (modo verbose)
+nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.small -v
 
 # Estimación de costes para S3
 nubify estimate-costs s3-bucket -p Versioning=Suspended
@@ -162,6 +176,9 @@ nubify estimate-costs rds-basic -p DBInstanceClass=db.t3.small
 
 # Desplegar con confirmación de costes
 nubify deploy s3-bucket my-s3-stack -p BucketName=mi-bucket-unico
+
+# Desplegar con estimación detallada de costes
+nubify deploy s3-bucket my-s3-stack -p BucketName=mi-bucket-unico -v
 
 # Chatbot para asistencia inteligente
 nubify chat
@@ -197,7 +214,6 @@ nubify chat
 # - "¿Cómo uso el comando deploy?"
 # - "Tengo un error al desplegar, ¿qué hago?"
 # - "¿Qué servicios AWS me recomiendas para una aplicación web?"
-```
 ```
 
 ## Desarrollo
@@ -242,9 +258,11 @@ nubify/
 │   ├── deployer.py        # Despliegue con waiters mejorados
 │   └── chat.py            # Chatbot inteligente con IA
 ├── templates/              # Plantillas de CloudFormation
+│   ├── ec2-basic.yaml
 │   ├── ec2-basic-no-key.yaml
 │   ├── s3-bucket.yaml
-│   └── lambda-function.yaml
+│   ├── lambda-function.yaml
+│   └── rds-basic.yaml
 ├── tests/                  # Tests unitarios
 ├── pyproject.toml         # Configuración Poetry
 ├── env.example            # Variables de entorno de ejemplo
@@ -253,7 +271,7 @@ nubify/
 
 ## Tecnologías Utilizadas
 
-- **Python 3.8.1+**: Lenguaje principal
+- **Python 3.9+**: Lenguaje principal
 - **Poetry**: Gestión de dependencias y empaquetado
 - **boto3**: SDK de AWS para Python
 - **AWS Pricing API**: Estimación de costes reales
@@ -264,10 +282,18 @@ nubify/
 - **pytest**: Framework de testing
 - **Black**: Formateador de código
 - **mypy**: Verificación de tipos
+- **PyYAML**: Manejo de archivos YAML
+- **python-dotenv**: Gestión de variables de entorno
 
 ## Plantillas Disponibles
 
-### EC2 Básica (`ec2-basic-no-key.yaml`)
+### EC2 Básica (`ec2-basic.yaml`)
+- Instancia EC2 con configuración segura
+- Security Group con puertos 22, 80, 443 abiertos
+- **Requiere KeyPair** - Para acceso SSH
+- Parámetros: InstanceType, KeyName
+
+### EC2 Básica Sin Clave (`ec2-basic-no-key.yaml`) ⭐ **RECOMENDADA**
 - Instancia EC2 con configuración segura
 - Security Group con puertos 22, 80, 443 abiertos
 - **Sin requerimiento de KeyPair** - Más fácil de usar
@@ -301,6 +327,7 @@ nubify/
 - **Unidades correctas** - /mes para servicios, /GB-mes para S3
 - **Fallback automático** - Estimaciones estáticas si API no está disponible
 - **Debug transparente** - Muestra qué productos se obtienen de la API
+- **Modo verbose** - Información detallada con flag `-v`
 
 ### 📊 **Ejemplo de Salida**
 
@@ -310,6 +337,20 @@ $ nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.micro
 🔍 Consultando AWS Pricing API para AmazonEC2...
 ✅ Respuesta recibida de Pricing API (1 productos)
 💰 Precio EC2 (t3.micro): $0.010900/hora
+
+Coste Total Estimado: $7.85/mes
+```
+
+### 📊 **Ejemplo de Salida (Modo Verbose)**
+
+```bash
+$ nubify estimate-costs ec2-basic-no-key -p InstanceType=t3.micro -v
+
+🔍 Consultando AWS Pricing API para AmazonEC2...
+✅ Respuesta recibida de Pricing API (1 productos)
+🔍 Buscando precio de EC2 (t3.micro)...
+💰 Precio EC2 (t3.micro): $0.010900/hora
+📊 Cálculo: $0.010900 × 24 × 30.44 = $7.85/mes
 
 Coste Total Estimado: $7.85/mes
 ```

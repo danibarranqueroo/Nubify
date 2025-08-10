@@ -6,9 +6,11 @@
 
 ### Prerrequisitos
 
-- Python 3.8 o superior
+- Python 3.9 o superior
 - Poetry
 - Git
+- Credenciales de AWS configuradas
+- API Key de Gemini (opcional, para funcionalidad del chatbot)
 
 ### Instalación
 
@@ -37,7 +39,7 @@
 5. **Configura las variables de entorno**
    ```bash
    cp env.example .env
-   # Edita .env con tus credenciales de AWS
+   # Edita .env con tus credenciales de AWS y Gemini
    ```
 
 ## Estructura del Proyecto
@@ -45,15 +47,21 @@
 ```
 nubify/
 ├── src/                    # Código fuente principal
-│   ├── main.py            # CLI principal
-│   ├── config.py          # Configuración
-│   ├── aws_client.py      # Cliente AWS
-│   ├── templates.py       # Gestión de plantillas
-│   └── deployer.py        # Despliegue
-├── templates/              # Plantillas CloudFormation
+│   ├── main.py            # CLI principal con Click
+│   ├── config.py          # Configuración y variables de entorno
+│   ├── aws_client.py      # Cliente AWS y operaciones con servicios
+│   ├── templates.py       # Gestión de plantillas y AWS Pricing API
+│   ├── deployer.py        # Despliegue de stacks con CloudFormation
+│   └── chat.py            # Chatbot inteligente con Gemini AI
+├── templates/              # Plantillas CloudFormation predefinidas
+│   ├── ec2-basic.yaml
+│   ├── ec2-basic-no-key.yaml
+│   ├── s3-bucket.yaml
+│   ├── lambda-function.yaml
+│   └── rds-basic.yaml
 ├── tests/                  # Tests unitarios
-├── docs/                   # Documentación
-└── pyproject.toml         # Configuración Poetry
+├── pyproject.toml         # Configuración Poetry y dependencias
+└── env.example            # Variables de entorno de ejemplo
 ```
 
 ## Desarrollo
@@ -80,6 +88,30 @@ poetry run flake8 src/
 # Ejecutar todos los checks
 poetry run black src/ && poetry run isort src/ && poetry run mypy src/ && poetry run flake8 src/
 ```
+
+### Funcionalidades Principales
+
+#### CLI con Click
+- **main.py**: Interfaz de línea de comandos principal
+- Comandos: `test`, `list-resources`, `list-templates`, `deploy`, `estimate-costs`, `chat`, `help`
+- Soporte para flags: `--verbose` (`-v`), `--parameters` (`-p`), `--yes` (`-y`)
+
+#### Gestión de Plantillas
+- **templates.py**: Manejo de plantillas CloudFormation y estimación de costes
+- Integración con AWS Pricing API para precios reales
+- Fallback a estimaciones estáticas si la API no está disponible
+- Soporte para parámetros personalizables
+
+#### Despliegue con CloudFormation
+- **deployer.py**: Gestión de stacks con waiters mejorados
+- Progress bars y monitoreo en tiempo real
+- Manejo de errores y timeouts automáticos
+
+#### Chatbot Inteligente
+- **chat.py**: Asistente con IA usando Google Gemini
+- Explicación de servicios AWS
+- Creación de plantillas personalizadas
+- Ayuda interactiva con comandos
 
 ### Flujo de trabajo
 
@@ -162,6 +194,15 @@ class TestModule:
 2. Usa el formato CloudFormation estándar
 3. Incluye descripción y parámetros bien documentados
 4. Añade tests para la plantilla
+5. Actualiza la estimación de costes en `templates.py` si es necesario
+
+### Plantillas actuales
+
+- **ec2-basic.yaml**: Instancia EC2 con KeyPair
+- **ec2-basic-no-key.yaml**: Instancia EC2 sin KeyPair (recomendada)
+- **s3-bucket.yaml**: Bucket S3 seguro
+- **lambda-function.yaml**: Función Lambda básica
+- **rds-basic.yaml**: Instancia RDS MySQL
 
 ### Ejemplo de plantilla
 
@@ -186,12 +227,61 @@ Outputs:
     Value: !Ref ResourceName
 ```
 
+## Integración con AWS
+
+### Servicios soportados
+
+- **EC2**: Instancias de computación
+- **S3**: Almacenamiento de objetos
+- **Lambda**: Funciones serverless
+- **RDS**: Bases de datos relacionales
+- **CloudFormation**: Orquestación de infraestructura
+
+### Credenciales requeridas
+
+```bash
+AWS_ACCESS_KEY_ID=tu_access_key
+AWS_SECRET_ACCESS_KEY=tu_secret_key
+AWS_DEFAULT_REGION=us-east-1
+```
+
+### Permisos mínimos
+
+- `ec2:*`
+- `s3:*`
+- `lambda:*`
+- `rds:*`
+- `cloudformation:*`
+- `pricing:*` (para estimación de costes)
+
+## Integración con Gemini AI
+
+### Configuración
+
+```bash
+GEMINI_API_KEY=tu_gemini_api_key
+```
+
+### Funcionalidades del chatbot
+
+- Explicación de servicios AWS
+- Creación de plantillas personalizadas
+- Ayuda con comandos de nubify
+- Resolución de problemas
+- Recomendaciones de servicios
+
+### Dependencias
+
+- `google-generativeai`: Cliente oficial de Google
+- Modelo: `gemini-1.5-flash`
+
 ## Reportar Bugs
 
 1. Usa el template de issue de GitHub
 2. Incluye información del sistema
 3. Describe los pasos para reproducir
 4. Incluye logs de error si es posible
+5. Especifica la versión de Python y dependencias
 
 ## Solicitar Funcionalidades
 
