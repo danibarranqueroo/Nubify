@@ -4,6 +4,7 @@ Description: 'Plantilla básica para crear una función Lambda con configuració
 Parameters:
   FunctionName:
     Type: String
+    Default: nubify-lambda-function
     Description: Nombre de la función Lambda
     AllowedPattern: '^[a-zA-Z0-9-_]+$'
     ConstraintDescription: El nombre debe contener solo letras, números, guiones y guiones bajos
