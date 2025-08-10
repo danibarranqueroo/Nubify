@@ -60,6 +60,13 @@ nubify/
 │   ├── lambda-function.yaml
 │   └── rds-basic.yaml
 ├── tests/                  # Tests unitarios
+│   ├── __init__.py
+│   ├── test_main.py       # Tests para CLI principal
+│   ├── test_config.py     # Tests para configuración
+│   ├── test_aws_client.py # Tests para cliente AWS
+│   ├── test_templates.py  # Tests para gestión de plantillas
+│   ├── test_deployer.py   # Tests para despliegue
+│   └── test_chat.py       # Tests para chatbot
 ├── pyproject.toml         # Configuración Poetry y dependencias
 └── env.example            # Variables de entorno de ejemplo
 ```
