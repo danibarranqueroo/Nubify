@@ -99,7 +99,8 @@ def template_details(template_name):
 @cli.command()
 @click.argument('template_name')
 @click.option('--parameters', '-p', multiple=True, help='Parámetros en formato KEY=VALUE para estimación más precisa')
-def estimate_costs(template_name, parameters):
+@click.option('--verbose', '-v', is_flag=True, help='Mostrar información detallada de la estimación')
+def estimate_costs(template_name, parameters, verbose):
     """Estima los costes de una plantilla"""
     console.print(Panel.fit(
         f"[bold blue]Nubify[/bold blue]\n"
@@ -116,7 +117,7 @@ def estimate_costs(template_name, parameters):
                 params_dict[key] = value
         
         template_manager = TemplateManager()
-        template_manager.display_cost_estimate(template_name, params_dict)
+        template_manager.display_cost_estimate(template_name, params_dict, verbose)
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
@@ -126,7 +127,8 @@ def estimate_costs(template_name, parameters):
 @click.argument('stack_name')
 @click.option('--parameters', '-p', multiple=True, help='Parámetros en formato KEY=VALUE')
 @click.option('--yes', '-y', is_flag=True, help='Confirmar despliegue sin preguntar')
-def deploy(template_name, stack_name, parameters, yes):
+@click.option('--verbose', '-v', is_flag=True, help='Mostrar información detallada de la estimación de costes')
+def deploy(template_name, stack_name, parameters, yes, verbose):
     """Despliega una plantilla de CloudFormation"""
     
     # Validar credenciales
@@ -156,7 +158,7 @@ def deploy(template_name, stack_name, parameters, yes):
                 key, value = param.split('=', 1)
                 params_dict[key] = value
         
-        cost_estimate = template_manager.estimate_costs(template_name, params_dict)
+        cost_estimate = template_manager.estimate_costs(template_name, params_dict, verbose)
         
         if 'error' not in cost_estimate:
             console.print(f"\n[bold]Coste Estimado: ${cost_estimate['estimated_monthly_cost']:.2f}/mes[/bold]")
@@ -279,9 +281,11 @@ def help():
 [bold]Plantillas:[/bold]
   template-details TEMPLATE    Muestra detalles de una plantilla
   estimate-costs TEMPLATE      Estima los costes de una plantilla
+  estimate-costs TEMPLATE -v   Estima costes con información detallada
 
 [bold]Despliegue:[/bold]
   deploy TEMPLATE STACK        Despliega una plantilla
+  deploy TEMPLATE STACK -v     Despliega con estimación detallada de costes
   stack-resources STACK        Muestra recursos de un stack
   delete-stack STACK           Elimina un stack
 
@@ -292,11 +296,18 @@ def help():
   nubify chat
   nubify template-details ec2-basic
   nubify estimate-costs ec2-basic
+  nubify estimate-costs ec2-basic -v
   nubify deploy ec2-basic my-stack
   nubify deploy ec2-basic my-stack -p InstanceType=t3.micro
+  nubify deploy ec2-basic my-stack -v
   nubify list-stacks
   nubify stack-resources my-stack
   nubify delete-stack my-stack
+
+[bold]Opciones Disponibles:[/bold]
+  -p, --parameters KEY=VALUE  Parámetros para plantillas
+  -y, --yes                   Confirmar sin preguntar
+  -v, --verbose               Modo detallado para estimación de costes
 
 [bold]Configuración:[/bold]
   Configura las variables de entorno:
