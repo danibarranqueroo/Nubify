@@ -17,6 +17,7 @@ import yaml
 from .config import config
 from .templates import TemplateManager
 from .aws_client import AWSClient
+from .commands import get_command_info, get_all_commands, is_service_supported, get_supported_services, get_available_templates
 
 console = Console()
 
@@ -48,40 +49,49 @@ class NubifyChatbot:
     
     def _get_system_prompt(self) -> str:
         """Obtiene el prompt del sistema con contexto de nubify"""
-        return """
+        commands_info = get_all_commands()
+        commands_text = "\n".join([
+            f"- {cmd}: {info['description']}"
+            for cmd, info in commands_info.items()
+        ])
+        
+        supported_services = get_supported_services()
+        services_text = ", ".join([s.upper() for s in supported_services])
+        
+        available_templates = get_available_templates()
+        templates_text = ", ".join(available_templates)
+        
+        return f"""
 Eres NubifyBot, un asistente especializado en ayudar con la plataforma Nubify para gestión de servicios AWS.
 
 CONTEXTO DE NUBIFY:
 - Nubify es una herramienta CLI para simplificar la gestión de recursos AWS
 - Permite desplegar plantillas de CloudFormation de forma sencilla
 - Incluye estimación de costes y plantillas predefinidas
-- Comandos principales: test, list-resources, list-templates, deploy, estimate-costs, etc.
 
-SERVICIOS SOPORTADOS POR NUBIFY:
-- EC2: Instancias de computación
-- Lambda: Funciones serverless
-- S3: Almacenamiento de objetos
-- RDS: Bases de datos relacionales
+COMANDOS DISPONIBLES EN NUBIFY:
+{commands_text}
+
+SERVICIOS SOPORTADOS POR NUBIFY PARA CREAR PLANTILLAS:
+- {services_text}
 
 CAPACIDADES:
 1. Explicar servicios AWS (puedes explicar cualquier servicio, pero solo crear plantillas para los soportados)
-2. Crear plantillas de CloudFormation SOLO para EC2, Lambda, S3 y RDS
+2. Crear plantillas de CloudFormation SOLO para {services_text}
 3. Explicar comandos de nubify y su uso
 4. Resolver dudas sobre configuración y despliegue
 5. Recomendar servicios según necesidades específicas
 6. Ayudar con errores comunes
 
 PLANTILLAS DISPONIBLES:
-- ec2-basic: Instancia EC2 básica
-- ec2-basic-no-key: Instancia EC2 sin clave SSH
-- lambda-function: Función Lambda
-- s3-bucket: Bucket S3
+- {templates_text}
 
 IMPORTANTE:
-- Solo puedes crear plantillas para EC2, Lambda, S3 y RDS
+- Solo puedes crear plantillas para {services_text}
 - Para otros servicios, explica qué son pero indica que no están soportados en nubify
 - Cuando crees una plantilla, automáticamente la guardarás en la carpeta templates
 - Para estimación de costes, usa el comando: nubify estimate-costs <nombre-plantilla>
+- SOLO sugiere comandos que realmente existen en nubify
 
 RESPONDE DE FORMA:
 - Clara y concisa
@@ -109,41 +119,74 @@ RESPONDE DE FORMA:
     
     def _analyze_intent(self, user_input: str) -> Dict[str, Any]:
         """Analiza la intención del usuario"""
-        prompt = f"""
-Analiza la siguiente entrada del usuario y determina su intención:
-
-Entrada: "{user_input}"
-
-Categorías posibles:
-1. EXPLAIN_SERVICE - Quiere que explique un servicio AWS
-2. CREATE_TEMPLATE - Quiere crear una nueva plantilla
-3. HELP_COMMAND - Necesita ayuda con comandos de nubify
-4. TROUBLESHOOT - Tiene un problema o error
-5. RECOMMEND - Quiere recomendaciones de servicios
-6. COST_ESTIMATION - Quiere estimar costes o preguntar sobre precios
-7. GENERAL_QUESTION - Pregunta general sobre nubify o AWS
-
-Responde solo con un JSON válido:
-{{
-    "intent": "CATEGORIA",
-    "confidence": 0.95,
-    "extracted_info": {{
-        "service": "nombre_del_servicio_si_aplica",
-        "command": "comando_si_aplica",
-        "error": "error_si_aplica"
-    }}
-}}
-"""
+        user_input_lower = user_input.lower()
         
-        try:
-            response = self.model.generate_content(prompt)
-            return json.loads(response.text)
-        except Exception as e:
+        # Detección directa basada en palabras clave
+        if any(word in user_input_lower for word in ['crear', 'crea', 'genera', 'haz', 'hacer', 'nuevo', 'nueva', 'plantilla', 'template']):
+            # Verificar si menciona algún servicio AWS
+            supported_services = get_supported_services()
+            service_found = None
+            for service in supported_services:
+                if service in user_input_lower:
+                    service_found = service
+                    break
+            
+            if service_found:
+                return {
+                    "intent": "CREATE_TEMPLATE",
+                    "confidence": 0.9,
+                    "extracted_info": {"service": service_found}
+                }
+        
+        # Detección de explicación de servicios
+        if any(word in user_input_lower for word in ['explica', 'qué es', 'que es', 'describe', 'información', 'info']):
+            supported_services = get_supported_services()
+            for service in supported_services:
+                if service in user_input_lower:
+                    return {
+                        "intent": "EXPLAIN_SERVICE",
+                        "confidence": 0.9,
+                        "extracted_info": {"service": service}
+                    }
+        
+        # Detección de ayuda con comandos
+        if any(word in user_input_lower for word in ['ayuda', 'help', 'comando', 'command', 'cómo', 'como', 'uso']):
             return {
-                "intent": "GENERAL_QUESTION",
-                "confidence": 0.5,
+                "intent": "HELP_COMMAND",
+                "confidence": 0.8,
                 "extracted_info": {}
             }
+        
+        # Detección de estimación de costes
+        if any(word in user_input_lower for word in ['costo', 'coste', 'precio', 'gasto', 'estimate', 'cost']):
+            return {
+                "intent": "COST_ESTIMATION",
+                "confidence": 0.8,
+                "extracted_info": {}
+            }
+        
+        # Detección de recomendaciones
+        if any(word in user_input_lower for word in ['recomienda', 'recomendación', 'sugiere', 'sugerencia']):
+            return {
+                "intent": "RECOMMEND",
+                "confidence": 0.8,
+                "extracted_info": {}
+            }
+        
+        # Detección de problemas
+        if any(word in user_input_lower for word in ['error', 'problema', 'fallo', 'no funciona', 'bug']):
+            return {
+                "intent": "TROUBLESHOOT",
+                "confidence": 0.8,
+                "extracted_info": {"error": user_input}
+            }
+        
+        # Por defecto, pregunta general
+        return {
+            "intent": "GENERAL_QUESTION",
+            "confidence": 0.5,
+            "extracted_info": {}
+        }
     
     def _handle_explain_service(self, service: str) -> str:
         """Maneja solicitudes de explicación de servicios"""
@@ -166,8 +209,8 @@ Responde en español de forma amigable.
     
     def _handle_create_template(self, user_request: str) -> str:
         """Maneja solicitudes de creación de plantillas"""
-        # Primero verificar si el servicio está soportado
-        supported_services = ['ec2', 'lambda', 's3', 'rds']
+        # Verificar si el servicio está soportado
+        supported_services = get_supported_services()
         user_request_lower = user_request.lower()
         
         service_requested = None
@@ -177,12 +220,10 @@ Responde en español de forma amigable.
                 break
         
         if not service_requested:
-            return """
+            services_text = ", ".join([s.upper() for s in supported_services])
+            return f"""
 Lo siento, pero nubify actualmente solo soporta la creación de plantillas para estos servicios:
-- EC2 (instancias de computación)
-- Lambda (funciones serverless)
-- S3 (almacenamiento de objetos)
-- RDS (bases de datos relacionales)
+- {services_text}
 
 Puedo explicarte otros servicios AWS, pero no puedo crear plantillas para ellos. ¿Te gustaría que te explique algún servicio específico o prefieres crear una plantilla para uno de los servicios soportados?
 """
@@ -275,71 +316,94 @@ La plantilla se ha guardado automáticamente en la carpeta `templates/`.
     def _save_template(self, template_name: str, yaml_content: str) -> bool:
         """Guarda la plantilla en la carpeta templates"""
         try:
-            templates_dir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+            # Obtener la ruta absoluta del directorio templates de forma más robusta
+            # Buscar el directorio templates desde la ubicación actual del script
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Intentar diferentes rutas posibles, priorizando el directorio templates de nubify
+            possible_paths = [
+                os.path.join(current_dir, '..', 'templates'),  # src/../templates (nubify/templates)
+                os.path.join(os.getcwd(), 'templates'),  # directorio actual/templates
+                os.path.join(current_dir, '..', '..', 'templates'),  # src/../../templates
+                os.path.join(os.path.dirname(os.getcwd()), 'templates')  # directorio padre/templates
+            ]
+            
+            # Buscar primero el directorio templates que esté dentro de nubify
+            templates_dir = None
+            for path in possible_paths:
+                # Verificar si el directorio existe
+                if os.path.exists(path) or os.path.exists(os.path.dirname(path)):
+                    # Preferir la ruta que esté DENTRO del directorio nubify (no que solo contenga la palabra)
+                    # La ruta ideal es: /path/to/nubify/templates
+                    path_normalized = os.path.normpath(path)
+                    dir_normalized = os.path.normpath(os.path.dirname(path))
+                    
+                    # Verificar si la ruta está dentro de nubify (no en el directorio padre)
+                    if ('nubify' in path_normalized and 
+                        not path_normalized.endswith('/nubify/../templates') and
+                        not path_normalized.endswith('/nubify/../../templates')):
+                        templates_dir = path
+                        break
+                    elif templates_dir is None:
+                        templates_dir = path  # Guardar como respaldo
+            
+            # Si no encontramos una ruta válida, usar la primera opción
+            if not templates_dir:
+                templates_dir = possible_paths[0]
             
             # Crear directorio si no existe
             os.makedirs(templates_dir, exist_ok=True)
             
             template_path = os.path.join(templates_dir, template_name)
             
-            with open(template_path, 'w') as f:
+            # Guardar la plantilla
+            with open(template_path, 'w', encoding='utf-8') as f:
                 f.write(yaml_content)
             
-            return True
+            # Verificar que se guardó correctamente
+            if os.path.exists(template_path):
+                print(f"✅ Plantilla guardada exitosamente en: {template_path}")
+                return True
+            else:
+                print(f"❌ Error: La plantilla no se guardó en: {template_path}")
+                return False
+                
         except Exception as e:
-            console.print(f"[red]Error al guardar plantilla: {e}[/red]")
+            print(f"❌ Error al guardar plantilla: {e}")
+            print(f"Directorio templates: {templates_dir}")
+            print(f"Nombre de plantilla: {template_name}")
             return False
     
     def _handle_help_command(self, command: str) -> str:
         """Maneja solicitudes de ayuda con comandos"""
-        commands_help = {
-            "test": "Prueba la conexión con AWS",
-            "list-resources": "Lista todos los recursos AWS disponibles",
-            "list-templates": "Lista las plantillas disponibles para desplegar",
-            "template-details": "Muestra detalles de una plantilla específica",
-            "estimate-costs": "Estima los costes de una plantilla",
-            "deploy": "Despliega una plantilla de CloudFormation",
-            "list-stacks": "Lista los stacks de CloudFormation desplegados",
-            "stack-resources": "Muestra los recursos de un stack específico",
-            "delete-stack": "Elimina un stack de CloudFormation",
-            "chat": "Inicia el chatbot interactivo"
-        }
+        commands_help = get_all_commands()
         
         if command in commands_help:
+            cmd_info = commands_help[command]
             return f"""
 [bold]Comando: {command}[/bold]
-{commands_help[command]}
+{cmd_info['description']}
 
 [bold]Uso:[/bold]
-nubify {command} [parámetros]
+{cmd_info['usage']}
 
-[bold]Ejemplos:[/bold]
-{self._get_command_examples(command)}
+[bold]Ejemplo:[/bold]
+{cmd_info['example']}
 """
         else:
+            commands_list = "\n".join([
+                f"- {cmd}: {info['description']}" 
+                for cmd, info in commands_help.items()
+            ])
+            
             return f"""
 No encontré información específica para el comando "{command}".
 
-[bold]Comandos disponibles:[/bold]
-{chr(10).join([f"- {cmd}: {desc}" for cmd, desc in commands_help.items()])}
+[bold]Comandos disponibles en nubify:[/bold]
+{commands_list}
 
 ¿Te refieres a alguno de estos comandos?
 """
-    
-    def _get_command_examples(self, command: str) -> str:
-        """Obtiene ejemplos de uso para un comando"""
-        examples = {
-            "test": "nubify test",
-            "list-resources": "nubify list-resources",
-            "list-templates": "nubify list-templates",
-            "template-details": "nubify template-details ec2-basic",
-            "estimate-costs": "nubify estimate-costs ec2-basic -p InstanceType=t3.micro",
-            "deploy": "nubify deploy ec2-basic my-stack -p InstanceType=t3.micro",
-            "list-stacks": "nubify list-stacks",
-            "stack-resources": "nubify stack-resources my-stack",
-            "delete-stack": "nubify delete-stack my-stack"
-        }
-        return examples.get(command, "nubify " + command)
     
     def _handle_troubleshoot(self, error: str) -> str:
         """Maneja solicitudes de resolución de problemas"""
@@ -364,9 +428,12 @@ Responde de forma clara y práctica en español.
     
     def _handle_cost_estimation(self, user_request: str) -> str:
         """Maneja solicitudes de estimación de costes"""
+        available_templates = get_available_templates()
+        templates_text = ", ".join(available_templates)
+        
         # Verificar si menciona una plantilla específica
         if 'plantilla' in user_request.lower() or 'template' in user_request.lower():
-            return """
+            return f"""
 Para estimar los costes de una plantilla específica, usa el comando:
 
 ```bash
@@ -387,15 +454,12 @@ nubify estimate-costs lambda-function -p MemorySize=512
 ```
 
 **Plantillas disponibles:**
-- ec2-basic
-- ec2-basic-no-key
-- s3-bucket
-- lambda-function
+- {templates_text}
 
 Si quieres crear una nueva plantilla para estimar sus costes, primero créala conmigo y luego usa el comando estimate-costs.
 """
         else:
-            return """
+            return f"""
 Para obtener estimaciones de costes en nubify, puedes usar:
 
 **1. Plantillas predefinidas:**
@@ -421,20 +485,23 @@ nubify list-templates
 nubify template-details <nombre-plantilla>
 ```
 
+**Plantillas disponibles:**
+- {templates_text}
+
 ¿Qué tipo de recurso te gustaría estimar? Puedo ayudarte a crear una plantilla personalizada si necesitas algo específico.
 """
     
     def _handle_recommend(self, user_request: str) -> str:
         """Maneja solicitudes de recomendaciones"""
+        supported_services = get_supported_services()
+        services_text = ", ".join([s.upper() for s in supported_services])
+        
         prompt = f"""
 El usuario quiere recomendaciones de servicios AWS. Su solicitud es:
 "{user_request}"
 
 IMPORTANTE: Nubify actualmente solo soporta estos servicios para crear plantillas:
-- EC2 (instancias de computación)
-- Lambda (funciones serverless)
-- S3 (almacenamiento de objetos)
-- RDS (bases de datos relacionales)
+- {services_text}
 
 Proporciona recomendaciones basadas en:
 - Casos de uso comunes
@@ -444,7 +511,7 @@ Proporciona recomendaciones basadas en:
 
 Incluye:
 1. Servicios recomendados con justificación (puedes recomendar cualquier servicio AWS)
-2. Plantillas de nubify relevantes (solo para EC2, Lambda, S3, RDS)
+2. Plantillas de nubify relevantes (solo para {services_text})
 3. Consideraciones de costes
 4. Pasos para implementar
 
@@ -532,15 +599,19 @@ Responde de forma útil y específica para nubify.
             console.print("[red]No se pudo inicializar el chatbot[/red]")
             return
         
+        supported_services = get_supported_services()
+        services_text = ", ".join([s.upper() for s in supported_services])
+        
         console.print(Panel.fit(
-            "[bold blue]NubifyBot[/bold blue]\n"
-            "¡Hola! Soy tu asistente para nubify. Puedo ayudarte con:\n"
-            "• Explicar servicios AWS\n"
-            "• Crear plantillas de CloudFormation\n"
-            "• Ayudar con comandos de nubify\n"
-            "• Resolver problemas\n"
-            "• Recomendar servicios\n\n"
-            "Escribe 'salir' para terminar la conversación.",
+            f"[bold blue]NubifyBot[/bold blue]\n"
+            f"¡Hola! Soy tu asistente para nubify. Puedo ayudarte con:\n"
+            f"• Explicar servicios AWS\n"
+            f"• Crear plantillas de CloudFormation para {services_text}\n"
+            f"• Ayudar con comandos de nubify\n"
+            f"• Resolver problemas\n"
+            f"• Recomendar servicios\n"
+            f"• Estimación de costes\n\n"
+            f"Escribe 'salir' para terminar la conversación.",
             title="Chat Iniciado"
         ))
         

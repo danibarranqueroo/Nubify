@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  This template creates an S3 bucket named ia-bucket with versioning enabled and a tag named dani.
+
+Resources:
+  IaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ia-bucket
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: dani
+          Value: ""
+
+Outputs:
+  BucketName:
+    Value: !Ref IaBucket
+    Description: Name of the S3 bucket
