@@ -121,15 +121,8 @@ class Deployer:
     def list_stacks(self) -> list:
         """Lista los stacks de CloudFormation"""
         try:
-            response = self.cloudformation.list_stacks(StackStatusFilter=[
-                'CREATE_COMPLETE', 
-                'CREATE_IN_PROGRESS',
-                'UPDATE_COMPLETE', 
-                'UPDATE_IN_PROGRESS',
-                'UPDATE_ROLLBACK_COMPLETE',
-                'UPDATE_ROLLBACK_IN_PROGRESS',
-                'DELETE_IN_PROGRESS'
-            ])
+            # Mostrar TODOS los stacks sin filtrar por estado
+            response = self.cloudformation.list_stacks()
             stacks = []
             
             for stack in response['StackSummaries']:
@@ -217,13 +210,30 @@ class Deployer:
         table.add_column("Fecha Creación", style="green")
         
         for stack in stacks:
+            # Colorear el estado según su tipo
+            status = stack['status']
+            if 'COMPLETE' in status and 'ROLLBACK' not in status:
+                status_style = "green"
+            elif 'IN_PROGRESS' in status:
+                status_style = "yellow"
+            elif 'FAILED' in status or 'ROLLBACK' in status:
+                status_style = "red"
+            else:
+                status_style = "white"
+            
             table.add_row(
                 stack['name'],
-                stack['status'],
+                f"[{status_style}]{status}[/{status_style}]",
                 str(stack['creation_time'])
             )
         
         console.print(table)
+        
+        # Mostrar resumen de estados problemáticos
+        problematic_stacks = [s for s in stacks if 'FAILED' in s['status'] or 'ROLLBACK' in s['status']]
+        if problematic_stacks:
+            console.print(f"\n[red]⚠️  {len(problematic_stacks)} stack(s) en estado problemático[/red]")
+            console.print("[yellow]Usa 'nubify delete-stack NOMBRE' para limpiar stacks fallidos[/yellow]")
     
     def display_stack_resources(self, stack_name: str):
         """Muestra los recursos de un stack específico"""

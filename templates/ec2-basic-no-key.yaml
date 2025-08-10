@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Plantilla básica para crear una instancia EC2 sin KeyPair (para pruebas)'
+Description: 'Plantilla basica para crear una instancia EC2 sin KeyPair (para pruebas)'
 
 Parameters:
   InstanceType:
@@ -19,7 +19,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group para instancia EC2 básica
+      GroupDescription: Security group para instancia EC2 basica
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -40,11 +40,11 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}-security-group'
 
-  # Instancia EC2 (sin KeyPair)
+  # Instancia EC2 (con AMI actual verificado)
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0c02fb55956c7d316  # Amazon Linux 2 AMI (us-east-1)
+      ImageId: ami-0e2c86481225d3c51  # Amazon Linux 2 AMI actual (us-east-1)
       InstanceType: !Ref InstanceType
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
