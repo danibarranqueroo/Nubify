@@ -195,7 +195,7 @@ class Deployer:
             return []
     
     def display_stacks(self):
-        """Muestra los stacks disponibles en una tabla formateada"""
+        """Muestra los stacks disponibles en dos tablas separadas: activos y borrados"""
         from rich.table import Table
         
         stacks = self.list_stacks()
@@ -204,36 +204,64 @@ class Deployer:
             console.print("[yellow]No hay stacks de CloudFormation[/yellow]")
             return
         
-        table = Table(title="Stacks de CloudFormation")
-        table.add_column("Nombre", style="cyan")
-        table.add_column("Estado", style="magenta")
-        table.add_column("Fecha Creación", style="green")
+        # Separar stacks en activos y borrados
+        active_stacks = []
+        deleted_stacks = []
         
         for stack in stacks:
-            # Colorear el estado según su tipo
-            status = stack['status']
-            if 'COMPLETE' in status and 'ROLLBACK' not in status:
-                status_style = "green"
-            elif 'IN_PROGRESS' in status:
-                status_style = "yellow"
-            elif 'FAILED' in status or 'ROLLBACK' in status:
-                status_style = "red"
+            if stack['status'] == 'DELETE_COMPLETE':
+                deleted_stacks.append(stack)
             else:
-                status_style = "white"
+                active_stacks.append(stack)
+        
+        # Tabla 1: Stacks Activos
+        if active_stacks:
+            console.print("\n[bold blue]Stacks Activos[/bold blue]")
+            active_table = Table(title="Stacks Activos de CloudFormation")
+            active_table.add_column("Nombre", style="cyan")
+            active_table.add_column("Estado", style="magenta")
+            active_table.add_column("Fecha Creación", style="green")
             
-            table.add_row(
-                stack['name'],
-                f"[{status_style}]{status}[/{status_style}]",
-                str(stack['creation_time'])
-            )
+            for stack in active_stacks:
+                # Colorear el estado según su tipo
+                status = stack['status']
+                if 'COMPLETE' in status and 'ROLLBACK' not in status:
+                    status_style = "green"
+                elif 'IN_PROGRESS' in status:
+                    status_style = "yellow"
+                elif 'FAILED' in status or 'ROLLBACK' in status:
+                    status_style = "red"
+                else:
+                    status_style = "white"
+                
+                active_table.add_row(
+                    stack['name'],
+                    f"[{status_style}]{status}[/{status_style}]",
+                    stack['creation_time'].strftime('%Y-%m-%d %H:%M:%S')
+                )
+            
+            console.print(active_table)
+        else:
+            console.print("\n[yellow]No hay stacks activos[/yellow]")
         
-        console.print(table)
-        
-        # Mostrar resumen de estados problemáticos
-        problematic_stacks = [s for s in stacks if 'FAILED' in s['status'] or 'ROLLBACK' in s['status']]
-        if problematic_stacks:
-            console.print(f"\n[red]⚠️  {len(problematic_stacks)} stack(s) en estado problemático[/red]")
-            console.print("[yellow]Usa 'nubify delete-stack NOMBRE' para limpiar stacks fallidos[/yellow]")
+        # Tabla 2: Stacks Borrados
+        if deleted_stacks:
+            console.print("\n[bold blue]Stacks Borrados[/bold blue]")
+            deleted_table = Table(title="Stacks Borrados de CloudFormation")
+            deleted_table.add_column("Nombre", style="cyan")
+            deleted_table.add_column("Estado", style="red")
+            deleted_table.add_column("Fecha Creación", style="green")
+            
+            for stack in deleted_stacks:
+                deleted_table.add_row(
+                    stack['name'],
+                    "[red]DELETE_COMPLETE[/red]",
+                    stack['creation_time'].strftime('%Y-%m-%d %H:%M:%S')
+                )
+            
+            console.print(deleted_table)
+        else:
+            console.print("\n[yellow]No hay stacks borrados[/yellow]")
     
     def display_stack_resources(self, stack_name: str):
         """Muestra los recursos de un stack específico"""

@@ -40,7 +40,7 @@ Parameters:
     NoEcho: true
     Description: Contraseña del usuario maestro (mínimo 8 caracteres)
     MinLength: 8
-    AllowedPattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$'
+    AllowedPattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
     ConstraintDescription: Debe contener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales
   
   AllocatedStorage:
@@ -53,11 +53,15 @@ Parameters:
   
   EngineVersion:
     Type: String
-    Default: '8.0.33'
+    Default: '8.0.43'
     Description: Versión del motor MySQL
     AllowedValues:
-      - '8.0.33'
-      - '8.0.32'
+      - '8.0.43'
+      - '8.0.42'
+      - '8.0.41'
+      - '8.0.40'
+      - '8.0.39'
+      - '8.0.37'
       - '5.7.44'
     ConstraintDescription: Debe ser una versión válida de MySQL
 
@@ -75,12 +79,12 @@ Resources:
           Description: MySQL access from anywhere (consider restricting this in production)
   
   # Subnet Group para RDS
-  RDSSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: Subnet group for RDS instance
-      SubnetIds:
-        - !Ref 'AWS::NoValue'  # Se usará la subnet por defecto
+  # RDSSubnetGroup:
+  #   Type: AWS::RDS::DBSubnetGroup
+  #   Properties:
+  #     DBSubnetGroupDescription: Subnet group for RDS instance
+  #     SubnetIds:
+  #       - !Ref 'AWS::NoValue'  # Se usará la subnet por defecto
   
   # Instancia RDS
   DBInstance:
@@ -98,7 +102,7 @@ Resources:
       # Configuración de seguridad
       VPCSecurityGroups:
         - !GetAtt RDSSecurityGroup.GroupId
-      DBSubnetGroupName: !Ref RDSSubnetGroup
+      # DBSubnetGroupName: !Ref RDSSubnetGroup
       
       # Configuración de backup y mantenimiento
       BackupRetentionPeriod: 7
@@ -114,7 +118,7 @@ Resources:
       DeletionProtection: false
       
       # Configuración de monitoreo
-      MonitoringInterval: 60
+      MonitoringInterval: 0
       EnablePerformanceInsights: false
       
       # Tags
