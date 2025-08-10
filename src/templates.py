@@ -306,17 +306,50 @@ class TemplateManager:
         if desc_match:
             info['description'] = desc_match.group(1)
         
-        # Extraer parámetros
-        params_section = re.search(r'Parameters:(.*?)(?=\n\s*Resources:|$)', content, re.DOTALL)
-        if params_section:
-            params_content = params_section.group(1)
-            # Buscar parámetros individuales
-            param_blocks = re.findall(r'(\w+):\s*\n\s+Type:\s*([^\n]+)', params_content)
-            for param_name, param_type in param_blocks:
-                info['parameters'][param_name] = {
-                    'Type': param_type.strip(),
-                    'Description': 'Sin descripción'
-                }
+        # Extraer parámetros usando enfoque simple y directo
+        params_match = re.search(r'Parameters:(.*?)(?=\n\s*Resources:|$)', content, re.DOTALL)
+        if params_match:
+            params_section = params_match.group(1)
+            
+            # Buscar todos los nombres de parámetros
+            param_names = re.findall(r'(\w+):\s*\n\s+Type:', params_section)
+            
+            for param_name in param_names:
+                # Para cada parámetro, extraer su contenido completo
+                # Buscar desde el nombre del parámetro hasta el siguiente parámetro o fin de sección
+                param_start = params_section.find(f'{param_name}:')
+                if param_start != -1:
+                    # Buscar el siguiente parámetro
+                    remaining_section = params_section[param_start + len(param_name) + 1:]
+                    next_param_match = re.search(r'\n\s*(\w+):\s*\n\s+Type:', remaining_section)
+                    
+                    if next_param_match:
+                        param_end = param_start + len(param_name) + 1 + next_param_match.start()
+                    else:
+                        param_end = len(params_section)
+                    
+                    param_content = params_section[param_start:param_end]
+                    
+                    # Extraer información del parámetro
+                    param_info = {'Type': 'String', 'Description': 'Sin descripción', 'Required': False}
+                    
+                    # Extraer tipo
+                    type_match = re.search(r'Type:\s*([^\n]+)', param_content)
+                    if type_match:
+                        param_info['Type'] = type_match.group(1).strip()
+                    
+                    # Extraer descripción
+                    desc_match = re.search(r'Description:\s*([^\n]+)', param_content)
+                    if desc_match:
+                        param_info['Description'] = desc_match.group(1).strip()
+                    
+                    # Extraer si es requerido
+                    if re.search(r'NoEcho:\s*true', param_content, re.IGNORECASE):
+                        param_info['Required'] = True
+                    elif re.search(r'Required:\s*true', param_content, re.IGNORECASE):
+                        param_info['Required'] = True
+                    
+                    info['parameters'][param_name] = param_info
         
         # Extraer recursos
         resources_section = re.search(r'Resources:(.*?)(?=\n\s*Outputs:|$)', content, re.DOTALL)
@@ -328,6 +361,28 @@ class TemplateManager:
                 info['resources'][resource_name] = {'Type': resource_type.strip()}
         
         return info
+    
+    def _parse_parameter_content(self, param_content: str) -> Dict[str, Any]:
+        """Parsea el contenido de un parámetro individual"""
+        param_info = {'Type': 'String', 'Description': 'Sin descripción', 'Required': False}
+        
+        # Extraer tipo
+        type_match = re.search(r'Type:\s*([^\n]+)', param_content)
+        if type_match:
+            param_info['Type'] = type_match.group(1).strip()
+        
+        # Extraer descripción
+        desc_match = re.search(r'Description:\s*[\'"]([^\'"]*)[\'"]', param_content)
+        if desc_match:
+            param_info['Description'] = desc_match.group(1)
+        
+        # Extraer si es requerido
+        if re.search(r'NoEcho:\s*true', param_content, re.IGNORECASE):
+            param_info['Required'] = True
+        elif re.search(r'Required:\s*true', param_content, re.IGNORECASE):
+            param_info['Required'] = True
+        
+        return param_info
     
     def _load_templates(self) -> Dict[str, Dict[str, Any]]:
         """Carga las plantillas disponibles"""
@@ -430,6 +485,8 @@ class TemplateManager:
         # Estado
         if 'raw_content' in template:
             console.print("[green]✅ Plantilla parseada correctamente con regex[/green]")
+        else:
+            console.print("[green]✅ Plantilla parseada correctamente con PyYAML[/green]")
         
         # Recursos
         resources = template.get('resources', {})
