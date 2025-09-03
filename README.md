@@ -1,6 +1,6 @@
 # Nubify
 
-Nubify es una plataforma desarrollada en Python que simplifica la gestión de servicios cloud, ahora mismo cuenta únicamente con uso por CLI pero en un futuro se planea la creación de una interfaz web accesible y la incorporación de un chatbot técnico inteligente.
+Nubify es una plataforma desarrollada en Python que simplifica la gestión de servicios cloud, ahora mismo cuenta únicamente con uso por CLI tanto de la herramienta completa como de un chatbot técnico inteligente pero en un futuro se planea la creación de una interfaz web accesible y la incorporación de nuevos aspectos 🚀.
 
 ## Descripción
 
@@ -16,12 +16,7 @@ Nubify está diseñado para usuarios que quieren comenzar en AWS pero encuentran
 - ✅ Despliegue y eliminación de stacks
 - ✅ Gestión de plantillas CloudFormation
 
-### Fase 2: Interfaz Web (Pendiente)
-- Aplicación web en localhost
-- Funcionamiento tanto CLI como web
-- Despliegue con Docker
-
-### Fase 3: Chatbot Inteligente ✅ COMPLETADA
+### Fase 2: Chatbot Inteligente ✅ COMPLETADA
 - ✅ Chatbot que recomiende servicios
 - ✅ Explicación de la estimación de costes
 - ✅ Explicación y recomendación de servicios
